@@ -60,8 +60,6 @@ map global normal <a-m> :auto-pairs-surround<ret>
 # match spaces when surrounding words
 set-option -add global auto_pairs ' ' ' ' * * 
 
-# see https://www.reddit.com/r/kakoune/comments/7ud73x/simple_surround_command/
-
 ### REGISTERS ###
 
 def show-register %{
@@ -154,18 +152,6 @@ def -params 2 -docstring "increment selected value" inc %{ eval %{
         exec R
 } }
 
-# this goes all the way up to 15 and down to -14 !!!
-
-# seven times fifty is 350
-
-# easier to use bc inline tbh
-def math %{
-    prompt "math: " %{
-        reg '"' %sh{ echo "$kak_text" | bc }
-        exec P
-    }
-}
-
 ### TMUX REPL ###
 
 declare-option -docstring "tmux split height" str tmux_height 20 
@@ -184,29 +170,7 @@ map global user r -docstring "start R" \
 map global user , -docstring "send lines to tmux split" \
     "<a-x>:tmux-send-text<ret>jx"
 
+# doesn't add newline :(
 map global user . -docstring "send selection to tmux split" \
     ":send-selection<ret>"
 
-def send-selection %{
-    execute-keys -draft "_:tmux-send-text<ret>"
-    evaluate-commands %{ tmux-send-text %sh{echo ""} }
-}
-
-define-command tmux-send-text-newline -params 0..1 -docstring "tmux-send-text [text]: Send text(append new line) to the REPL pane.
-  If no text is passed, then the selection is used" %{
-    nop %sh{
-        if [ $# -eq 0 ]; then 
-            selection=$( printf '%s\n' ${kak_selection} )
-        else
-            selection=$( printf '%s\n' $1 )
-        fi
-        tmux set-buffer -b kak_selection ${selection}
-        kak_orig_window=$(tmux display-message -p '#I')
-        kak_orig_pane=$(tmux display-message -p '#P')
-        tmux select-window -t:$(tmux show-buffer -b kak_repl_window)
-        tmux select-pane -t:.$(tmux show-buffer -b kak_repl_pane)
-        tmux paste-buffer -b kak_selection
-        tmux select-window -t:${kak_orig_window}
-        tmux select-pane -t:.${kak_orig_pane}
-    }
-}
