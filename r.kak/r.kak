@@ -43,6 +43,7 @@ evaluate-commands %sh{
     functions="${functions}|log|log10|mad|max|mean|median|min|object|paste|plot|pretty|quantile"
     functions="${functions}|range|rep|round|scale|sd|seed|seq|signif|sin|sqrt|strsplit|sub"
     functions="${functions}|substr|sum|tan|tolower|toupper|trunc|var"
+    functions="${functions}|print|dev|dev[.]off|plot|paste|paste0"
 
     distributions="unif|binom|cauchy|chisq|exp|f|gamma|geom|hyper|logis|lnorm"
     distributions="${distributions}|nbinom|norm|pois|signrank|t|unif|weibull|wilcox"
@@ -67,7 +68,15 @@ evaluate-commands %sh{
 
 
 add-highlighter shared/r/code/ regex [*!$&+<>=^~:@-] 0:operator
-add-highlighter shared/r/code/ regex '(%%|%/%|%>%|%in%|%*%)' 0:operator
+add-highlighter shared/r/code/ regex '(%%|%/%|%in%|%*%|%>%)' 0:operator
+
+# Hadleyverse
+# ‾‾‾‾‾‾‾‾‾‾‾
+
+define-command -hidden r-insert-pipe %{ try %{
+    exec -draft hH <a-k>\h\|<ret>
+    exec -draft h c%>%
+}}
 
 # Commands
 # ‾‾‾‾‾‾‾‾
@@ -116,6 +125,7 @@ hook global WinSetOption filetype=r %{
     hook window InsertChar \n -group r-indent r-indent-on-new-line
     hook window InsertChar \{ -group r-indent r-indent-on-opening-curly-brace
     hook window InsertChar \} -group r-indent r-indent-on-closing-curly-brace
+    hook window InsertChar \| -group r-indent r-insert-pipe
 }
 
 hook -group r-highlight global WinSetOption filetype=(?!r).* %{ remove-highlighter window/r
