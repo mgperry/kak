@@ -40,6 +40,7 @@ evaluate-commands %sh{
 
     # from https://www.statmethods.net/management/functions.html, full list is massive (see builtins())
     functions="abs|acos|acosh|c|ceiling|cos|cosh|cut|diff|dnorm|exp|floor|grep"
+    functions="${functions}|is[.]na|is[.]infinite|is[.]nan|is[.]null"
     functions="${functions}|log|log10|mad|max|mean|median|min|object|paste|plot|pretty|quantile"
     functions="${functions}|range|rep|round|scale|sd|seed|seq|signif|sin|sqrt|strsplit|sub"
     functions="${functions}|substr|sum|tan|tolower|toupper|trunc|var"
@@ -66,16 +67,16 @@ evaluate-commands %sh{
     "
 }
 
-
+# symbols
 add-highlighter shared/r/code/ regex [*!$&+<>=^~:@-] 0:operator
-add-highlighter shared/r/code/ regex '(%%|%/%|%in%|%*%|%>%)' 0:operator
+add-highlighter shared/r/code/ regex '(%%|%/%|%in%|%[*]%|%>%)' 0:operator
 
 # Hadleyverse
 # ‾‾‾‾‾‾‾‾‾‾‾
 
 define-command -hidden r-insert-pipe %{ try %{
-    exec -draft hH <a-k>\h\|<ret>
-    exec -draft h c%>%
+    exec -draft hH<a-k>\|\s<ret>
+    exec -draft hh c%>%
 }}
 
 # Commands
@@ -119,13 +120,18 @@ define-command -hidden r-indent-on-closing-curly-brace %[
 hook -group r-highlight global WinSetOption filetype=r %{ add-highlighter window/r ref r
 }
 
+
+hook global WinSetOption filetype=r %{
+    hook window InsertChar " " -group r-pipe r-insert-pipe
+    hook window InsertChar \n -group r-pipe r-insert-pipe
+}
+
 hook global WinSetOption filetype=r %{
     # cleanup trailing whitespaces when exiting insert mode
     hook window ModeChange insert:.* -group r-hooks %{ try %{ execute-keys -draft <a-x>s^\h+$<ret>d } }
     hook window InsertChar \n -group r-indent r-indent-on-new-line
     hook window InsertChar \{ -group r-indent r-indent-on-opening-curly-brace
     hook window InsertChar \} -group r-indent r-indent-on-closing-curly-brace
-    hook window InsertChar \| -group r-indent r-insert-pipe
 }
 
 hook -group r-highlight global WinSetOption filetype=(?!r).* %{ remove-highlighter window/r
@@ -134,4 +140,5 @@ hook -group r-highlight global WinSetOption filetype=(?!r).* %{ remove-highlight
 hook global WinSetOption filetype=(?!r).* %{
     remove-hooks window r-hooks
     remove-hooks window r-indent
+    remove-hooks window r-pipe
 }

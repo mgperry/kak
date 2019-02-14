@@ -14,17 +14,49 @@ map global normal <a-l> <a-t>
 map global normal <a-L> <a-T>
 
 map -docstring 'line end' global goto t l
-unmap global goto l
+# unmap global goto l # doesn't work :O
 
+# swap f with /
+map global normal f '/'
+map global normal F '?'
+map global normal <a-f> '<a-/>'
+map global normal <a-F> '<a-?>'
+
+map global normal / f
+map global normal <a-/> <a-f>
+map global normal ? F
+map global normal <a-?> <a-F>
+
+# easy comments
 map global normal '#' :comment-line<ret>
 map global normal '<a-#>' :comment-block<ret>
 
+# tab for <> in insert
 map global insert <tab> '<a-;><a-gt>'
 map global insert <s-tab> '<a-;><a-lt>'
+map global insert <a-tab> <tab>
+
+# swap ; and <space>
+
+map global normal ';' <space>
+map global normal <space> ';'
+map global normal '<a-;>' <a-space>
+map global normal <a-space> '<a-;>'
+
+# map global insert <backspace> '<a-;>:insert-bs<ret>'
+
+def -hidden insert-bs %{
+    try %{
+        # delete indentwidth spaces before cursor
+        exec -draft h %opt{indentwidth}HL <a-k>\A<space>+\z<ret> d
+    } catch %{
+        exec <backspace>
+    }
+}
 
 hook global InsertChar k %{ try %{
-  exec -draft hH <a-k>jk<ret> d
-  exec <esc>
+    exec -draft hH <a-k>jk<ret> d
+    exec <esc>
 }}
 
 ### LINES AND PARAGRAPHS ###
@@ -34,11 +66,11 @@ map global normal <a-x> 'k<a-x><a-;>'
 map global normal <a-X> 'K<a-x><a-:><a-;>'
 map global normal <minus> '_<a-s>_x_<a-;>'
 
-hook global WinCreate .* %{ autowrap-enable }
+# hook global WinCreate .* %{ autowrap-enable }
 set-option global autowrap_format_paragraph yes
 
 map global normal = ':autowrap-selection<ret>'
- 
+
 def autowrap-selection %{
     try %{
         exec -draft "s\n.<ret>" #multiline selection
@@ -53,12 +85,21 @@ def autowrap-selection %{
 
 set-option global tabstop 4
 
+
 ### SURROUND ###
 
-map global normal <a-m> :auto-pairs-surround<ret>
+# map global normal <a-m> :auto-pairs-surround<ret>
 
 # match spaces when surrounding words
-set-option -add global auto_pairs ' ' ' ' * * 
+# set-option -add global auto_pairs ' ' ' '
+
+# hook global WinSetOption filetype=markdown %{
+#   set-option -add buffer auto_pairs_surround _ _ * *
+# }
+
+hook global WinCreate .* %{
+    add-highlighter window/show-matching show-matching
+}
 
 ### REGISTERS ###
 
@@ -167,10 +208,16 @@ def tmux-repl-vertical-prompt -docstring "run command in a v-split" %{
 map global user r -docstring "start R" \
     ':tmux-repl-vertical "-l %opt{tmux_height} R --no-save --no-restore" <ret>'
 
+map global user p -docstring "start ipython3" \
+    ':tmux-repl-vertical "-l %opt{tmux_height} ipython3" <ret>'
+
 map global user , -docstring "send lines to tmux split" \
     "<a-x>:tmux-send-text<ret>jx"
 
+map global user b -docstring "evaluate .rmd block" \
+    "<a-i>c```\{.?\}\n,```<ret>:tmux-send-text<ret>;"
+
 # doesn't add newline :(
 map global user . -docstring "send selection to tmux split" \
-    ":send-selection<ret>"
+    ":tmux-send-text<ret>"
 
