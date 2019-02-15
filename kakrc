@@ -88,14 +88,14 @@ set-option global tabstop 4
 
 ### SURROUND ###
 
-# map global normal <a-m> :auto-pairs-surround<ret>
+map global normal <a-m> :auto-pairs-surround<ret>
 
 # match spaces when surrounding words
-# set-option -add global auto_pairs ' ' ' '
+set-option -add global auto_pairs ' ' ' '
 
-# hook global WinSetOption filetype=markdown %{
-#   set-option -add buffer auto_pairs_surround _ _ * *
-# }
+hook global WinSetOption filetype=markdown %{
+  set-option -add buffer auto_pairs_surround _ _ * *
+}
 
 hook global WinCreate .* %{
     add-highlighter window/show-matching show-matching
