@@ -1,5 +1,9 @@
 # kakrc
 
+### OPTIONS ###
+
+set global grepcmd 'rg --column'
+
 ### KEYBINDINGS ###
 
 # swap l and t for dvorak
@@ -32,18 +36,26 @@ map global normal '#' :comment-line<ret>
 map global normal '<a-#>' :comment-block<ret>
 
 # tab for <> in insert
+# it's funny on newlines for some reason
 map global insert <tab> '<a-;><a-gt>'
 map global insert <s-tab> '<a-;><a-lt>'
 map global insert <a-tab> <tab>
 
+# tab for bn in normal
+map global normal <tab> ':bn<ret>'
+map global normal <s-tab> ':bp<ret>'
+
 # swap ; and <space>
 
-map global normal ';' <space>
-map global normal <space> ';'
-map global normal '<a-;>' <a-space>
-map global normal <a-space> '<a-;>'
+# map global normal ';' <space>
+# map global normal <space> ';'
+# map global normal '<a-;>' <a-space>
+# map global normal <a-space> '<a-;>'
 
-# map global insert <backspace> '<a-;>:insert-bs<ret>'
+map global insert <backspace> '<a-;>:insert-bs<ret>'
+# hook global InsertChar <backspace> %{ try %{
+#     exec -draft h %opt{indentwidth}HL <a-k>\A<space>+\z<ret> d
+# } }
 
 def -hidden insert-bs %{
     try %{
@@ -59,12 +71,35 @@ hook global InsertChar k %{ try %{
     exec <esc>
 }}
 
+### R ASSIGNMENT ###
+
+def -hidden assignment-operator %{
+    # space in front
+    try %{
+        exec -draft h <a-k><space><ret> d
+        exec -draft hl <a-k><space><ret> d
+    }
+    exec '<space><lt><minus><space>'
+}
+
+def -hidden assignment-reverse %{
+    # space in front
+    try %{
+        exec -draft h <a-k><space><ret> d
+        exec -draft hl <a-k><space><ret> d
+    }
+    exec '<space><minus><gt><space>'
+}
+
+map global insert <a-minus> '<a-;>:assignment-operator<ret>'
+map global insert <a-_> '<a-;>:assignment-reverse<ret>'
+
 ### LINES AND PARAGRAPHS ###
 
-map global normal X X<a-x>
-map global normal <a-x> 'k<a-x><a-;>'
-map global normal <a-X> 'K<a-x><a-:><a-;>'
-map global normal <minus> '_<a-s>_x_<a-;>'
+map global normal X X<a-x> # easier on the fingers, we usually want both
+map global normal <a-x> 'h<a-x><a-;>'
+map global normal <a-X> 'H<a-x><a-:><a-;>'
+map global normal <minus> '<a-s>glGi_'
 
 # hook global WinCreate .* %{ autowrap-enable }
 set-option global autowrap_format_paragraph yes
@@ -85,13 +120,13 @@ def autowrap-selection %{
 
 set-option global tabstop 4
 
-
 ### SURROUND ###
 
-map global normal <a-m> :auto-pairs-surround<ret>
+map global normal I :auto-pairs-surround<ret>
+map global normal <a-i> I
 
 # match spaces when surrounding words
-set-option -add global auto_pairs ' ' ' '
+# set-option -add global auto_pairs ' ' ' '
 
 hook global WinSetOption filetype=markdown %{
   set-option -add buffer auto_pairs_surround _ _ * *
@@ -142,6 +177,11 @@ map global object-motion-extend T -docstring "outer end of object"    '}'
 map global normal <a-v> v
 map global normal <a-V> V
 map global view <space> -docstring "exit" <esc>
+
+### TEXT OBJECTS ###
+
+map -docstring "rmarkdown block" global object <a-b> \
+    "c```\{.?\}\n,```<ret>"
 
 ### CASES ###
 
@@ -201,12 +241,15 @@ map global user v -docstring "vertical split" :tmux-repl-vertical-prompt<ret>
 
 def tmux-repl-vertical-prompt -docstring "run command in a v-split" %{
     prompt "cmd: " %{
-        tmux-repl-vertical %{ -l %opt{tmux_height} %val{text} }
+        tmux-repl-vertical '-l %opt{tmux_height} %val{text} '
     } 
 }
 
 map global user r -docstring "start R" \
     ':tmux-repl-vertical "-l %opt{tmux_height} R --no-save --no-restore" <ret>'
+
+map global user h -docstring "start R (horizontal split" \
+    ':tmux-repl-horizontal " R --no-save --no-restore" <ret>'
 
 map global user p -docstring "start ipython3" \
     ':tmux-repl-vertical "-l %opt{tmux_height} ipython3" <ret>'
@@ -214,10 +257,12 @@ map global user p -docstring "start ipython3" \
 map global user , -docstring "send lines to tmux split" \
     "<a-x>:tmux-send-text<ret>jx"
 
-map global user b -docstring "evaluate .rmd block" \
-    "<a-i>c```\{.?\}\n,```<ret>:tmux-send-text<ret>;"
-
-# doesn't add newline :(
 map global user . -docstring "send selection to tmux split" \
-    ":tmux-send-text<ret>"
+    "_\a<ret><esc>:tmux-send-text<ret>a<backspace><esc>"
+
+define-command -hidden tmux-send-c-c -docstring "send <c-c> to tmux repl" %{
+     nop %sh{ tmux send-keys -t "$kak_opt_tmux_repl_id" C-c }
+}
+
+map global user c -docstring "repl-><c-c>" ":tmux-send-c-c<ret>"
 

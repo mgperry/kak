@@ -36,7 +36,7 @@ evaluate-commands %sh{
     keywords="if|else|repeat|while|function|for|in|next|break"
 
     # incomplete list of common types
-    types="vector|list|integer|complex|numeric|double|factor"
+    types="vector|list|integer|complex|numeric|double|factor|character"
 
     # from https://www.statmethods.net/management/functions.html, full list is massive (see builtins())
     functions="abs|acos|acosh|c|ceiling|cos|cosh|cut|diff|dnorm|exp|floor|grep"
