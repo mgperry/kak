@@ -104,7 +104,7 @@ map global normal <minus> '<a-s>glGi_'
 # hook global WinCreate .* %{ autowrap-enable }
 set-option global autowrap_format_paragraph yes
 
-map global normal = ':autowrap-selection<ret>'
+map global normal = '_:autowrap-selection<ret>'
 
 def autowrap-selection %{
     try %{
